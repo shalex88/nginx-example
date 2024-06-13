@@ -20,6 +20,13 @@
             text-align: center;
             width: 45%;
         }
+        .io-block {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 10px;
+            text-align: center;
+            width: 100%;
+        }
         .video-stream {
             width: 100%;
             height: 300px;
@@ -37,6 +44,17 @@
     <h1>Project</h1>
 
     <div class="container">
+        <div class="io-block">
+            <p>
+                <h2 style="display: inline-block;">Input</h2>
+                <input type="text" id="inputData" placeholder="Enter data here..." style="width: 50%;">
+                <button onclick="sendData()">Send</button>
+            </p>
+            <p>
+                <h2 style="display: inline-block;">Output</h2>
+                <textarea id="outputData" readonly style="width: 50%;"></textarea>
+            </p>
+        </div>
         <div class="camera-block">
             <h2>Camera1</h2>
             <button onclick="toggleStream(this)">On/Off</button>
