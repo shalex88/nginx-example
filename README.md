@@ -11,10 +11,6 @@
 
 ## Run
 
-Open web browser http://localhost
+* Open a web browser
 
-## Log
-
-```bash
-    tail -f /var/log/nginx/error.log
-```
+* Serf to http://localhost (on target) or http://<target_ip> (on host)

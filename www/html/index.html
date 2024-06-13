@@ -13,18 +13,17 @@
             flex-wrap: wrap;
             justify-content: center;
         }
-        .camera-block {
+        .camera-block, .io-block {
             border: 1px solid #ccc;
             padding: 20px;
             margin: 10px;
             text-align: center;
+            box-sizing: border-box;
+        }
+        .camera-block {
             width: 45%;
         }
         .io-block {
-            border: 1px solid #ccc;
-            padding: 20px;
-            margin: 10px;
-            text-align: center;
             width: 100%;
         }
         .video-stream {
@@ -44,50 +43,60 @@
     <h1>Project</h1>
 
     <div class="container">
-        <div class="io-block">
-            <p>
-                <h2 style="display: inline-block;">Input</h2>
-                <input type="text" id="inputData" placeholder="Enter data here..." style="width: 50%;">
-                <button onclick="sendData()">Send</button>
-            </p>
-            <p>
-                <h2 style="display: inline-block;">Output</h2>
-                <textarea id="outputData" readonly style="width: 50%;"></textarea>
-            </p>
-        </div>
-        <div class="camera-block">
+        <section class="io-block">
+            <h2>Input</h2>
+            <input type="text" id="inputData" placeholder="Enter data here..." style="width: 50%;">
+            <button onclick="sendData()">Send</button>
+            <h2>Output</h2>
+            <textarea id="outputData" readonly style="width: 50%;"></textarea>
+        </section>
+        <article class="camera-block">
             <h2>Camera1</h2>
             <button onclick="toggleStream(this)">On/Off</button>
             <div class="video-stream" id="stream1"></div>
-        </div>
+        </article>
 
-        <div class="camera-block">
+        <article class="camera-block">
             <h2>Camera2</h2>
             <button onclick="toggleStream(this)">On/Off</button>
             <div class="video-stream" id="stream2"></div>
-        </div>
+        </article>
 
-        <div class="camera-block">
+        <article class="camera-block">
             <h2>Camera3</h2>
             <button onclick="toggleStream(this)">On/Off</button>
             <div class="video-stream" id="stream3"></div>
-        </div>
+        </article>
 
-        <div class="camera-block">
+        <article class="camera-block">
             <h2>Camera4</h2>
             <button onclick="toggleStream(this)">On/Off</button>
             <div class="video-stream" id="stream4"></div>
-        </div>
+        </article>
     </div>
 
     <script>
         function toggleStream(button) {
             const streamDiv = button.nextElementSibling;
-            if (streamDiv.style.backgroundColor === 'red') {
-                streamDiv.style.backgroundColor = '#f0f0f0';
-            } else {
-                streamDiv.style.backgroundColor = 'red';
-            }
+            streamDiv.style.backgroundColor = streamDiv.style.backgroundColor === 'red' ? '#f0f0f0' : 'red';
+        }
+
+        function sendData() {
+            const inputData = document.getElementById('inputData').value;
+            fetch('/sendData', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ data: inputData })
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('outputData').value = data;
+            })
+            .catch(error => {
+                document.getElementById('outputData').value = `Error: ${error}`;
+            });
         }
     </script>
 </body>
