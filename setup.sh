@@ -20,6 +20,10 @@ if [ ! -f /etc/nginx/sites-available/default.backup ]; then
     sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.backup
 fi
 
+# Copy nginx.conf.template and replace @user@ with $USER
+cp "$SCRIPT_DIR/nginx/nginx.conf.template" "$SCRIPT_DIR/nginx/nginx.conf"
+sed -i "s/@user@/$USER/g" "$SCRIPT_DIR/nginx/nginx.conf"
+
 # Create symlink to the new config
 sudo ln -sf "$SCRIPT_DIR/nginx/nginx.conf" /etc/nginx/sites-available/default
 
