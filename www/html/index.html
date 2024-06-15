@@ -38,6 +38,8 @@
             font-size: 16px;
         }
     </style>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/8.2.3/adapter.min.js" ></script>
+    <script type="text/javascript" src="https://janus.conf.meetecho.com/demos/janus.js"></script>
 </head>
 <body>
     <h1>Project</h1>
@@ -76,9 +78,69 @@
     </div>
 
     <script>
+        let janus = null;
+        let streams = {};
+
+        Janus.init({
+            debug: "all",
+            callback: function() {
+                janus = new Janus({
+                    server: "http://127.0.0.1:8088/janus",
+                    success: function() {
+                        // Attach to the streaming plugin for each camera
+                        attachStream(1, 'stream1');
+                        attachStream(2, 'stream2');
+                        attachStream(3, 'stream3');
+                        attachStream(4, 'stream4');
+                    }
+                });
+            }
+        });
+
+        function attachStream(id, elementId) {
+            janus.attach({
+                plugin: "janus.plugin.streaming",
+                opaqueId: `streamingtest-${Janus.randomString(12)}`,
+                success: function(pluginHandle) {
+                    streams[elementId] = pluginHandle;
+                    const body = { "request": "watch", "id": id };
+                    pluginHandle.send({ "message": body });
+                },
+                onmessage: function(msg, jsep) {
+                    if (jsep !== undefined && jsep !== null) {
+                        streams[elementId].createAnswer({
+                            jsep: jsep,
+                            media: { audioSend: false, videoSend: false },
+                            success: function(jsep) {
+                                const body = { "request": "start" };
+                                streams[elementId].send({ "message": body, "jsep": jsep });
+                            }
+                        });
+                    }
+                },
+                onremotestream: function(stream) {
+                    Janus.attachMediaStream(document.getElementById(elementId), stream);
+                }
+            });
+        }
+
         function toggleStream(button) {
             const streamDiv = button.nextElementSibling;
-            streamDiv.style.backgroundColor = streamDiv.style.backgroundColor === 'red' ? '#f0f0f0' : 'red';
+            const elementId = streamDiv.id;
+            const pluginHandle = streams[elementId];
+
+            if (pluginHandle) {
+                const body = { "request": "stop" };
+                pluginHandle.send({ "message": body });
+                pluginHandle.hangup();
+                delete streams[elementId];
+                streamDiv.innerHTML = '';
+                streamDiv.style.backgroundColor = '#f0f0f0';
+            } else {
+                const id = parseInt(elementId.replace('stream', ''), 10);
+                attachStream(id, elementId);
+                streamDiv.style.backgroundColor = 'white';
+            }
         }
 
         function sendData() {
