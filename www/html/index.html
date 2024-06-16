@@ -38,7 +38,7 @@
             font-size: 16px;
         }
     </style>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/8.2.3/adapter.min.js" ></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/8.2.3/adapter.min.js"></script>
     <script type="text/javascript" src="https://janus.conf.meetecho.com/demos/janus.js"></script>
 </head>
 <body>
@@ -85,13 +85,19 @@
             debug: "all",
             callback: function() {
                 janus = new Janus({
-                    server: "http://127.0.0.1:8088/janus",
+                    server: "ws://172.25.125.18:8188",
                     success: function() {
                         // Attach to the streaming plugin for each camera
                         attachStream(1, 'stream1');
-                        attachStream(2, 'stream2');
-                        attachStream(3, 'stream3');
-                        attachStream(4, 'stream4');
+                        // attachStream(2, 'stream2');
+                        // attachStream(3, 'stream3');
+                        // attachStream(4, 'stream4');
+                    },
+                    error: function(cause) {
+                        console.error("Janus error:", cause);
+                    },
+                    destroyed: function() {
+                        console.log("Janus destroyed");
                     }
                 });
             }
@@ -106,6 +112,9 @@
                     const body = { "request": "watch", "id": id };
                     pluginHandle.send({ "message": body });
                 },
+                error: function(error) {
+                    console.error("Error attaching plugin:", error);
+                },
                 onmessage: function(msg, jsep) {
                     if (jsep !== undefined && jsep !== null) {
                         streams[elementId].createAnswer({
@@ -114,6 +123,9 @@
                             success: function(jsep) {
                                 const body = { "request": "start" };
                                 streams[elementId].send({ "message": body, "jsep": jsep });
+                            },
+                            error: function(error) {
+                                console.error("WebRTC error:", error);
                             }
                         });
                     }
