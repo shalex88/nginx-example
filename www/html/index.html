@@ -54,104 +54,186 @@
         </section>
         <article class="camera-block">
             <h2>Camera1</h2>
-            <button onclick="toggleStream(this)">On/Off</button>
-            <div class="video-stream" id="stream1"></div>
+            <button id="toggle1" onclick="toggleStream(this, 1234, 'stream1', 'v1')">On</button>
+            <div class="video-stream" id="stream1" autoplay playsinline></div>
         </article>
 
         <article class="camera-block">
             <h2>Camera2</h2>
-            <button onclick="toggleStream(this)">On/Off</button>
-            <div class="video-stream" id="stream2"></div>
+            <button id="toggle2" onclick="toggleStream(this, 1234, 'stream2', 'v2')">On</button>
+            <div class="video-stream" id="stream2" autoplay playsinline></div>
         </article>
 
         <article class="camera-block">
             <h2>Camera3</h2>
-            <button onclick="toggleStream(this)">On/Off</button>
-            <div class="video-stream" id="stream3"></div>
+            <button id="toggle3" onclick="toggleStream(this, 1234, 'stream3', 'v3')">On</button>
+            <div class="video-stream" id="stream3" autoplay playsinline></div>
         </article>
 
         <article class="camera-block">
             <h2>Camera4</h2>
-            <button onclick="toggleStream(this)">On/Off</button>
-            <div class="video-stream" id="stream4"></div>
+            <button id="toggle4" onclick="toggleStream(this, 1234, 'stream4', 'v4')">On</button>
+            <div class="video-stream" id="stream4" autoplay playsinline></div>
         </article>
     </div>
 
     <script>
         let janus = null;
         let streams = {};
+        let videoTracks = {};
 
         Janus.init({
             debug: "all",
             callback: function() {
                 janus = new Janus({
-                    server: "ws://172.25.125.18:8188",
+                    server: "ws://172.25.125.18:8188",  // Ensure this is the correct WebSocket URL
                     success: function() {
-                        // Attach to the streaming plugin for each camera
-                        attachStream(1, 'stream1');
-                        // attachStream(2, 'stream2');
-                        // attachStream(3, 'stream3');
-                        // attachStream(4, 'stream4');
+                        Janus.log("Janus initialized");
                     },
-                    error: function(cause) {
-                        console.error("Janus error:", cause);
-                    },
-                    destroyed: function() {
-                        console.log("Janus destroyed");
+                    error: function(error) {
+                        Janus.error("Janus initialization error:", error);
                     }
                 });
             }
         });
 
-        function attachStream(id, elementId) {
+        function toggleStream(button, id, elementId, mid) {
+            if (button.textContent === "On") {
+                Janus.log("Start video stream id=" + id + ", mid=" + mid);
+                attachStream(button, id, elementId, mid);
+            } else {
+                Janus.log("Stop video stream id=" + id + ", mid=" + mid);
+                detachStream(button, elementId);
+            }
+        }
+
+        function attachStream(button, id, elementId, mid) {
             janus.attach({
                 plugin: "janus.plugin.streaming",
                 opaqueId: `streamingtest-${Janus.randomString(12)}`,
                 success: function(pluginHandle) {
                     streams[elementId] = pluginHandle;
-                    const body = { "request": "watch", "id": id };
-                    pluginHandle.send({ "message": body });
+                    videoTracks[elementId] = null;
+                    Janus.log(`Successfully attached to plugin: ${elementId}`);
+                    const body = { "request": "watch", "id": id, "mid": mid };
+                    pluginHandle.send({
+                        "message": body,
+                        success: function(result) {
+                            Janus.log("Stream watch request successful:", result);
+                        },
+                        error: function(error) {
+                            Janus.error("Stream watch request failed:", error);
+                        }
+                    });
+                    button.textContent = "Off";
                 },
                 error: function(error) {
-                    console.error("Error attaching plugin:", error);
+                    Janus.error("Plugin attach error:", error);
+                },
+                iceState: function(state) {
+                    Janus.log("ICE state changed to " + state);
+                },
+                webrtcState: function(on) {
+                    Janus.log("Janus says our WebRTC PeerConnection is " + (on ? "up" : "down") + " now");
                 },
                 onmessage: function(msg, jsep) {
+                    Janus.log("Received message:", msg);
                     if (jsep !== undefined && jsep !== null) {
                         streams[elementId].createAnswer({
                             jsep: jsep,
-                            media: { audioSend: false, videoSend: false },
+                            tracks: [
+                                { type: 'video', direction: 'recvonly' }
+                            ],
                             success: function(jsep) {
+                                Janus.log("Create answer success:", jsep);
                                 const body = { "request": "start" };
-                                streams[elementId].send({ "message": body, "jsep": jsep });
+                                streams[elementId].send({
+                                    "message": body,
+                                    "jsep": jsep,
+                                    success: function(result) {
+                                        Janus.log("Start request successful:", result);
+                                    },
+                                    error: function(error) {
+                                        Janus.error("Start request failed:", error);
+                                    }
+                                });
                             },
                             error: function(error) {
-                                console.error("WebRTC error:", error);
+                                Janus.error("WebRTC createAnswer error:", error);
                             }
                         });
                     }
                 },
-                onremotestream: function(stream) {
-                    Janus.attachMediaStream(document.getElementById(elementId), stream);
+                onremotetrack: function(track, mid, on) {
+                    Janus.log("Handling Remote Track for", elementId);
+                    if (!on) {
+                        Janus.log("Track removed:", track);
+                        return;
+                    }
+                    if (track.kind !== "video") return;
+
+                    // Handle only the first video track for each element
+                    if (videoTracks[elementId]) {
+                        Janus.log(`Ignoring additional track for ${elementId}`);
+                        return;
+                    }
+
+                    videoTracks[elementId] = track;
+                    track.enabled = true;
+                    track.muted = false; // Explicitly unmute the track
+                    const videoElement = document.getElementById(elementId);
+                    const stream = new MediaStream([track]);
+                    videoElement.srcObject = stream;
+
+                    // Log the track status
+                    Janus.log(`Track kind: ${track.kind}, ID: ${track.id}, Enabled: ${track.enabled}, Muted: ${track.muted}`);
+
+                    // Check Video Element Status
+                    videoElement.onloadedmetadata = () => {
+                        Janus.log(`Video metadata loaded for ${elementId}`);
+                        videoElement.play().then(() => {
+                            Janus.log(`Video playback started for ${elementId}`);
+                        }).catch(err => {
+                            Janus.error(`Video playback error for ${elementId}:`, err);
+                        });
+                    };
+
+                    Janus.log("Video stream set for", elementId);
+                },
+                oncleanup: function() {
+                    Janus.log("Cleaning up for", elementId);
+                    const videoElement = document.getElementById(elementId);
+                    if (videoElement.srcObject) {
+                        videoElement.srcObject.getTracks().forEach(track => track.stop());
+                    }
+                    videoElement.srcObject = null;
+                    videoTracks[elementId] = null;
                 }
             });
         }
 
-        function toggleStream(button) {
-            const streamDiv = button.nextElementSibling;
-            const elementId = streamDiv.id;
+        function detachStream(button, elementId) {
             const pluginHandle = streams[elementId];
-
             if (pluginHandle) {
                 const body = { "request": "stop" };
-                pluginHandle.send({ "message": body });
+                pluginHandle.send({
+                    "message": body,
+                    success: function(result) {
+                        Janus.log("Stop request successful:", result);
+                    },
+                    error: function(error) {
+                        Janus.error("Stop request failed:", error);
+                    }
+                });
                 pluginHandle.hangup();
                 delete streams[elementId];
-                streamDiv.innerHTML = '';
-                streamDiv.style.backgroundColor = '#f0f0f0';
-            } else {
-                const id = parseInt(elementId.replace('stream', ''), 10);
-                attachStream(id, elementId);
-                streamDiv.style.backgroundColor = 'white';
+                const videoElement = document.getElementById(elementId);
+                if (videoElement.srcObject) {
+                    videoElement.srcObject.getTracks().forEach(track => track.stop());
+                }
+                videoElement.srcObject = null;
+                videoTracks[elementId] = null;
+                button.textContent = "On";
             }
         }
 
