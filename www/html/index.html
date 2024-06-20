@@ -86,7 +86,7 @@
             debug: "all",
             callback: function() {
                 janus = new Janus({
-                    server: "ws://172.25.125.18:8188",  // Ensure this is the correct WebSocket URL
+                    server: "ws://" + window.location.hostname + ":8188",
                     success: function() {
                         Janus.log("Janus initialized");
                     },
