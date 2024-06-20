@@ -60,54 +60,60 @@
         <section class="camera-block">
             <h2>Camera1</h2>
             <button id="toggle1" onclick="toggleStream(this, 'stream1')">On</button>
-            <div class="video-stream" id="stream1" autoplay playsinline></div>
+            <div class="video-stream" id="stream1">
+                <iframe id="iframe1" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+            </div>
         </section>
 
         <section class="camera-block">
             <h2>Camera2</h2>
             <button id="toggle2" onclick="toggleStream(this, 'stream2')">On</button>
-            <div class="video-stream" id="stream2" autoplay playsinline></div>
+            <div class="video-stream" id="stream2">
+                <iframe id="iframe2" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+            </div>
         </section>
 
         <section class="camera-block">
             <h2>Camera3</h2>
             <button id="toggle3" onclick="toggleStream(this, 'stream3')">On</button>
-            <div class="video-stream" id="stream3" autoplay playsinline></div>
+            <div class="video-stream" id="stream3">
+                <iframe id="iframe3" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+            </div>
         </section>
 
         <section class="camera-block">
             <h2>Camera4</h2>
             <button id="toggle4" onclick="toggleStream(this, 'stream4')">On</button>
-            <div class="video-stream" id="stream4" autoplay playsinline></div>
+            <div class="video-stream" id="stream4">
+                <iframe id="iframe4" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+            </div>
         </section>
     </div>
 
     <script>
+        // Define the variable for the IP address
+        const serverIp = window.location.hostname;
+        const port = 8888;
+
+        // Function to set the src attribute of iframes
+        function setIframeSrc() {
+            document.getElementById('iframe1').src = `http://${serverIp}:${port}/stream1/`;
+            document.getElementById('iframe2').src = `http://${serverIp}:${port}/stream2/`;
+            document.getElementById('iframe3').src = `http://${serverIp}:${port}/stream3/`;
+            document.getElementById('iframe4').src = `http://${serverIp}:${port}/stream4/`;
+        }
+
         function toggleStream(button, id) {
-            const streamElement = document.getElementById(id);
+            const streamElement = document.getElementById(id).querySelector('iframe');
             if (button.textContent === "On") {
                 // Start the stream
-                startStream(id);
+                streamElement.style.display = 'block';
                 button.textContent = "Off";
             } else {
                 // Stop the stream
-                stopStream(id);
+                streamElement.style.display = 'none';
                 button.textContent = "On";
             }
-        }
-
-        function startStream(id) {
-            console.log("Starting stream for " + id);
-            const streamElement = document.getElementById(id);
-            streamElement.style.backgroundColor = '#000'; // Placeholder for starting stream
-            // Add logic to start the video stream
-        }
-
-        function stopStream(id) {
-            console.log("Stopping stream for " + id);
-            const streamElement = document.getElementById(id);
-            streamElement.style.backgroundColor = '#f0f0f0'; // Placeholder for stopping stream
-            // Add logic to stop the video stream
         }
 
         function sendData() {
@@ -127,6 +133,9 @@
                 document.getElementById('outputData').value = `Error: ${error}`;
             });
         }
+
+        // Set the iframe src attributes on page load
+        window.onload = setIframeSrc;
     </script>
 </body>
 </html>
