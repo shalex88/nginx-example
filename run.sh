@@ -4,11 +4,17 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# Update package lists
-sudo apt-get update
+install_nginx() {
+    sudo apt update
+    sudo apt install -y nginx
+    sudo systemctl stop nginx
+    sudo systemctl disable nginx
+}
 
-# Install Nginx
-sudo apt install -y nginx
+# Check if Nginx is already installed
+if ! [ -x "$(command -v nginx)" ]; then
+    install_nginx
+fi
 
 # Backup original nginx.conf
 if [ ! -f /etc/nginx/nginx.conf.backup ]; then
@@ -39,14 +45,19 @@ sudo chmod o+x $HOME
 sudo chmod o+x $SCRIPT_DIR
 
 # Restart Nginx to apply changes
-sudo systemctl restart nginx
+sudo systemctl start nginx
 
 ############## Back-end setup ##########################
 # Navigate to the back-end directory
 cd "$SCRIPT_DIR/back-end"
 
-# Install Node.js and npm
-sudo apt-get install -y nodejs npm
+install_nodejs() {
+    sudo apt-get install -y nodejs npm
+}
+
+if ! [ -x "$(command -v node)" ]; then
+    install_nodejs
+fi
 
 # Initialize a new Node.js project if not already done
 if [ ! -f package.json ]; then

@@ -6,7 +6,7 @@
     mkdir -p ~/project/webserver && cd $_
     git clone https://github.com/shalex88/nginx-example
     cd nginx-example
-    ./setup.sh
+    ./run.sh
 ```
 
 ## Run
