@@ -12,12 +12,30 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.post('/sendData', (req, res) => {
     const inputData = req.body.data;
 
-    // Execute a command on the Linux console
     exec(inputData, (error, stdout, stderr) => {
         if (error) {
             return res.status(500).send(`Error: ${stderr}`);
         }
         res.send(stdout);
+    });
+});
+
+app.post('/handleStream', (req, res) => {
+    const { id, action } = req.body;
+    // TODO: Remove hardcoded path
+    const command = `/home/user/project/video/start_stream.sh ${id} ${action}`;
+
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`exec error: ${error}`);
+            return res.status(500).send(`Error: ${error.message}`);
+        }
+        if (stderr) {
+            console.error(`stderr: ${stderr}`);
+            return res.status(500).send(`Stderr: ${stderr}`);
+        }
+        console.log(`BE: ${stdout}`);
+        res.send(`BE: ${stdout}`);
     });
 });
 

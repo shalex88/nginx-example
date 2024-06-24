@@ -92,42 +92,44 @@
 
     <script>
         const serverIp = window.location.hostname;
-        const port = 8888; // Ensure this matches the server port
+        const video_port = 8888;
 
         function setIframeSrc(id) {
             const iframe = document.getElementById(`iframe${id}`);
-            iframe.src = `http://${serverIp}:${port}/stream${id}/`;
+            iframe.src = `http://${serverIp}:${video_port}/stream${id}/`;
         }
 
         function toggleStream(button, id) {
             const streamElement = document.getElementById(`stream${id}`).querySelector('iframe');
             if (button.textContent == "On") {
-                console.info(`Start camera ${id}`);
-                controlStream(id, 'start');
+                handleStream(id, 'start');
                 streamElement.style.display = 'block';
                 button.textContent = "Off";
                 setIframeSrc(id);
             } else {
-                console.info(`Stop camera ${id}`);
-                controlStream(id, 'stop')
+                handleStream(id, 'stop')
                 streamElement.style.display = 'none';
                 button.textContent = "On";
                 streamElement.src = '';
             }
         }
 
-        function controlStream(id, action) {
-            const inputData = `/home/user/project/video/start_stream.sh ${id} ${action}`;
-            fetch('/sendData', {
+        function handleStream(id, action) {
+            console.log(`FE: ${action} Camera${id}`);
+            fetch('/handleStream', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ data: inputData })
+                body: JSON.stringify({ id, action })
             })
+            .then(response => response.text())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
         }
 
         function sendData() {
+            console.info('FE: Send input data');
             const inputData = document.getElementById('inputData').value;
             fetch('/sendData', {
                 method: 'POST',
