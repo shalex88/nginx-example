@@ -125,13 +125,6 @@
                 },
                 body: JSON.stringify({ data: inputData })
             })
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('outputData').value = data;
-            })
-            .catch(error => {
-                document.getElementById('outputData').value = `Error: ${error}`;
-            });
         }
 
         function sendData() {

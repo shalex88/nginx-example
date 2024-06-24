@@ -3,9 +3,9 @@
 ## Install
 
 ```bash
-    mkdir -p ~/project/webserver && cd $_
-    git clone https://github.com/shalex88/nginx-example
-    cd nginx-example
+    mkdir -p ~/project && cd $_
+    git clone https://github.com/shalex88/nginx-example webserver
+    cd webserver
     ./run.sh
 ```
 
