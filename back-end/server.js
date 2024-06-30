@@ -1,9 +1,12 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { exec } = require('child_process');
+const os = require('os');
 
 const app = express();
 const port = 3000;
+
+const userHomeDir = os.homedir();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -23,7 +26,7 @@ app.post('/sendData', (req, res) => {
 app.post('/handleStream', (req, res) => {
     const { id, action } = req.body;
     // TODO: Remove hardcoded path
-    const command = `/home/user/project/video/start_stream.sh ${id} ${action}`;
+    const command = `${userHomeDir}/project/video/start_stream.sh ${id} ${action}`;
 
     exec(command, (error, stdout, stderr) => {
         if (error) {
