@@ -24,9 +24,9 @@ app.post('/sendData', (req, res) => {
 });
 
 app.post('/handleStream', (req, res) => {
-    const { id, action } = req.body;
+    const { id, action, preprocessing, postprocessing } = req.body;
     // TODO: Remove hardcoded path
-    const command = `${userHomeDir}/project/video/start_stream.sh ${id} ${action}`;
+    const command = `${userHomeDir}/project/video/start_stream.sh ${id} ${action} ${preprocessing} ${postprocessing}`;
 
     exec(command, (error, stdout, stderr) => {
         if (error) {
