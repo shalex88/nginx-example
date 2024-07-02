@@ -13,7 +13,7 @@
             flex-wrap: wrap;
             justify-content: center;
         }
-        .camera-block, .io-block {
+        .camera-block, .io-block, #topOutput {
             border: 1px solid #ccc;
             padding: 20px;
             margin: 10px;
@@ -24,7 +24,7 @@
             width: 100%;
         }
         .io-block {
-            width: 100%;
+            width: 30%;
         }
         .video-stream {
             width: 100%;
@@ -37,6 +37,10 @@
             padding: 10px 20px;
             font-size: 16px;
         }
+        #topOutput {
+            width: 60%;
+            text-align: left; /* Centers the text inside the box */
+        }
         @media (min-width: 600px) {
             .camera-block {
                 width: 45%;
@@ -48,6 +52,7 @@
     <h1>Project</h1>
 
     <div class="container">
+        <pre id="topOutput"></pre>
         <section class="io-block">
             <h2>Input</h2>
             <input type="text" id="inputData" placeholder="Enter data here..." style="width: 50%;">
@@ -127,6 +132,15 @@
             .catch(error => console.error('Error:', error));
         }
 
+        function fetchTopOutput() {
+            fetch('/getTopOutput')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('topOutput').textContent = data;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
         function sendData() {
             console.info('FE: Send input data');
             const inputData = document.getElementById('inputData').value;
@@ -147,6 +161,9 @@
         }
 
         document.addEventListener('DOMContentLoaded', loadCameraBlocks);
+        document.addEventListener('DOMContentLoaded', function() {
+            setInterval(fetchTopOutput, 500);
+        });
     </script>
 </body>
 </html>
