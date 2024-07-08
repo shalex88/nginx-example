@@ -43,8 +43,9 @@ install() {
 # Check if Nginx is already installed
 if ! [ -x "$(command -v nginx)" ]; then
     install
-    configure
 fi
+
+configure
 
 ############## Back-end setup ##########################
 # Navigate to the back-end directory
