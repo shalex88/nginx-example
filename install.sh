@@ -63,6 +63,6 @@ install_nodejs() {
     npm install express body-parser
 }
 
-if ! [ -x "$(command -v node)" ]; then
+if [ ! -x "$(command -v node)" ] || [ ! -f "$SCRIPT_DIR/back-end/package.json" ]; then
     install_nodejs
 fi
