@@ -53,16 +53,18 @@ cd "$SCRIPT_DIR/back-end"
 
 install_nodejs() {
     sudo apt-get install -y nodejs npm
+}
 
+install_nodejs_packages() {
     # Initialize a new Node.js project if not already done
     if [ ! -f package.json ]; then
-    npm init -y
+        npm init -y
     fi
-
-    # Install required npm packages
-    npm install express body-parser
+    npm install express body-parser axios
 }
 
 if [ ! -x "$(command -v node)" ] || [ ! -f "$SCRIPT_DIR/back-end/package.json" ]; then
     install_nodejs
 fi
+
+install_nodejs_packages
