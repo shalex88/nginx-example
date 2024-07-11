@@ -1,6 +1,7 @@
 const express = require('express');
 const { exec } = require('child_process');
 const os = require('os');
+const path = require('path');
 
 const app = express();
 const port = 4000;
@@ -8,8 +9,7 @@ const port = 4000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const userHomeDir = os.homedir();
-
+const currentDir = path.dirname(__filename);
 app.post('/executeCommand', (req, res) => {
     const { command } = req.body;
 
@@ -23,7 +23,7 @@ app.post('/executeCommand', (req, res) => {
 
 app.post('/handleStream', (req, res) => {
     const { id, action, preprocessing, postprocessing } = req.body;
-    const command = `${userHomeDir}/project/video/start_stream.sh ${id} ${action} ${preprocessing} ${postprocessing}`;
+    const command = `${currentDir}/../../../video/start_stream.sh ${id} ${action} ${preprocessing} ${postprocessing}`;
 
     exec(command, (error, stdout, stderr) => {
         if (error) {
