@@ -10,7 +10,7 @@ const backendUrl = 'http://localhost:4000'; // URL of the backend server
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        cb(null, path.join(__dirname, '../../../video/tests/movies'));
     },
     filename: (req, file, cb) => {
         cb(null, file.originalname);
@@ -19,8 +19,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-app.use(bodyParser.json({ limit: '300mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '300mb' }));
+app.use(bodyParser.json({ limit: '1gb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '1gb' }));
 app.use(express.static('public'));
 
 app.post('/sendData', (req, res) => {
@@ -45,11 +45,8 @@ app.get('/getTopOutput', (req, res) => {
         .catch(error => res.status(500).send(`Error: ${error}`));
 });
 
-app.post('/upload', upload.single('file'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).send('No file uploaded.');
-    }
-    res.send('File uploaded successfully.');
+app.post('/upload', upload.array('files'), (req, res) => {
+    res.json({ message: 'Files uploaded successfully', files: req.files });
 });
 
 app.listen(port, () => {

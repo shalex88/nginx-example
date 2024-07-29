@@ -64,10 +64,11 @@
 
     <div class="container">
         <section class="io-block">
-        <h2>Upload File</h2>
+        <h2>Upload Files</h2>
+        <p>Max 1GB per upload</p>
         <form id="uploadForm" enctype="multipart/form-data">
-            <input type="file" id="fileInput" name="file">
-            <button type="button" onclick="uploadFile()">Upload</button>
+            <input type="file" id="fileInput" name="file" multiple>
+            <button type="button" onclick="uploadFiles()">Upload</button>
         </form>
         </section>
     </div>
@@ -170,18 +171,26 @@
             });
         }
 
-        function uploadFile() {
-            const formData = new FormData(document.getElementById('uploadForm'));
+        function uploadFiles() {
+            const formData = new FormData();
+            const files = document.getElementById('fileInput').files;
+
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
+            }
+
             fetch('/upload', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.text())
+            .then(response => response.json())
             .then(data => {
-                alert('File uploaded successfully');
+                alert(data.message);
+                console.log(data.message);
             })
             .catch(error => {
-                alert(`Error: ${error}`);
+                alert('Error uploading files');
+                console.error(error.message);
             });
         }
 

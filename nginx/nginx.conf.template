@@ -2,7 +2,7 @@ server {
     listen 80;
     server_name localhost;
 
-    client_max_body_size 300M;
+    client_max_body_size 1G;
 
     location / {
         root @path@/www/html;
