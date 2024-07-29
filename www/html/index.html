@@ -38,8 +38,7 @@
             font-size: 16px;
         }
         #topOutput {
-            width: 60%;
-            text-align: left; /* Centers the text inside the box */
+            text-align: left;
         }
         @media (min-width: 600px) {
             .camera-block {
@@ -53,23 +52,39 @@
 
     <div class="container">
         <pre id="topOutput"></pre>
-        <section class="io-block">
+    </div>
+
+    <div class="container">
+        <section class="camera-block">
             <h2>Input</h2>
             <input type="text" id="inputData" placeholder="Enter data here..." style="width: 50%;">
             <button onclick="sendData()">Send</button>
             <h2>Output</h2>
             <textarea id="outputData" readonly style="width: 50%;"></textarea>
         </section>
+        <section class="camera-block">
+            <h2>Upload Files</h2>
+            <p>Max 1GB per upload</p>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" id="fileInput" name="file" multiple>
+                <button type="button" onclick="uploadFiles()">Upload</button>
+            </form>
+        </section>
     </div>
 
-    <div class="container">
-        <section class="io-block">
-        <h2>Upload Files</h2>
-        <p>Max 1GB per upload</p>
-        <form id="uploadForm" enctype="multipart/form-data">
-            <input type="file" id="fileInput" name="file" multiple>
-            <button type="button" onclick="uploadFiles()">Upload</button>
-        </form>
+    <div class="container" id="camera-container">
+        <section class="camera-block">
+            <h2>Play Video File</h2>
+            <select id="movieFilesDropdown">
+            </select>
+            <div>
+                <input type="checkbox" id="preprocessing0"> Preprocessing
+                <input type="checkbox" id="postprocessing0"> Postprocessing
+                <button id="toggle0" onclick="toggleStream(this, 'file', document.getElementById('movieFilesDropdown').value, document.getElementById('preprocessing0').checked, document.getElementById('postprocessing0').checked)">On</button>
+            </div>
+            <div class="video-stream" id="stream0">
+                <iframe id="iframe0" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+            </div>
         </section>
     </div>
 
@@ -82,19 +97,19 @@
         const video_port = 8888;
 
         const cameraConfig = [
-            { id: 1 },
-            { id: 2 },
-            { id: 3 },
-            { id: 4 }
+            { type: 'camera', id: 1 },
+            { type: 'camera', id: 2 },
+            { type: 'camera', id: 3 },
+            { type: 'camera', id: 4 }
         ];
 
-        function createCameraBlock({ id }) {
+        function createCameraBlock({ type, id }) {
             return `
                 <section class="camera-block">
-                    <h2>Camera ${id}</h2>
+                    <h2>${type} ${id}</h2>
                     <input type="checkbox" id="preprocessing${id}"> Preprocessing
                     <input type="checkbox" id="postprocessing${id}"> Postprocessing
-                    <button id="toggle${id}" onclick="toggleStream(this, ${id}, document.getElementById('preprocessing${id}').checked, document.getElementById('postprocessing${id}').checked)">On</button>
+                    <button id="toggle${id}" onclick="toggleStream(this, '${type}', ${id}, document.getElementById('preprocessing${id}').checked, document.getElementById('postprocessing${id}').checked)">On</button>
                     <div class="video-stream" id="stream${id}">
                         <iframe id="iframe${id}" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
                     </div>
@@ -109,34 +124,43 @@
             });
         }
 
-        function setIframeSrc(id) {
+        function setIframeSrc(type, id) {
+            if (type == 'file') {
+                id = 0;
+            }
+
             const iframe = document.getElementById(`iframe${id}`);
             iframe.src = `http://${serverIp}:${video_port}/stream${id}/`;
         }
 
-        function toggleStream(button, id, preprocessing, postprocessing) {
-            const streamElement = document.getElementById(`stream${id}`).querySelector('iframe');
+        function toggleStream(button, type, id, preprocessing, postprocessing) {
+            if (type == 'file') {
+                streamElement = document.getElementById(`stream0`).querySelector('iframe');
+            } else if (type == 'camera') {
+                streamElement = document.getElementById(`stream${id}`).querySelector('iframe');
+            }
+
             if (button.textContent === "On") {
-                handleStream(id, 'start', preprocessing, postprocessing);
+                handleStream('start', type, id, preprocessing, postprocessing);
                 streamElement.style.display = 'block';
                 button.textContent = "Off";
-                setIframeSrc(id);
+                setIframeSrc(type, id);
             } else {
-                handleStream(id, 'stop', preprocessing, postprocessing);
+                handleStream('stop', type, id, preprocessing, postprocessing);
                 streamElement.style.display = 'none';
                 button.textContent = "On";
                 streamElement.src = '';
             }
         }
 
-        function handleStream(id, action, preprocessing, postprocessing) {
-            console.log(`FE: ${action} Camera${id}`);
+        function handleStream(action, type, id, preprocessing, postprocessing) {
+            console.log(`FE: ${action} ${type} ${id} ${preprocessing} ${postprocessing}`);
             fetch('/handleStream', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ id, action, preprocessing, postprocessing })
+                body: JSON.stringify({ action, type, id, preprocessing, postprocessing })
             })
             .then(response => response.text())
             .then(data => console.log(data))
@@ -187,6 +211,7 @@
             .then(data => {
                 alert(data.message);
                 console.log(data.message);
+                fetchMovieFiles();
             })
             .catch(error => {
                 alert('Error uploading files');
@@ -194,7 +219,25 @@
             });
         }
 
+        async function fetchMovieFiles() {
+            try {
+                const response = await fetch('/movies');
+                const files = await response.json();
+                const dropdown = document.getElementById('movieFilesDropdown');
+                dropdown.innerHTML = ''; // Clear existing options
+                files.forEach(file => {
+                    const option = document.createElement('option');
+                    option.value = file;
+                    option.textContent = file;
+                    dropdown.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching movie files:', error);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', loadCameraBlocks);
+        document.addEventListener('DOMContentLoaded', fetchMovieFiles);
         document.addEventListener('DOMContentLoaded', function() {
             setInterval(fetchTopOutput, 500);
         });

@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const multer = require('multer');
@@ -32,9 +33,9 @@ app.post('/sendData', (req, res) => {
 });
 
 app.post('/handleStream', (req, res) => {
-    const { id, action, preprocessing, postprocessing } = req.body;
+    const { action, type, id, preprocessing, postprocessing } = req.body;
 
-    axios.post(`${backendUrl}/handleStream`, { id, action, preprocessing, postprocessing })
+    axios.post(`${backendUrl}/handleStream`, { action, type, id, preprocessing, postprocessing })
         .then(response => res.send(response.data))
         .catch(error => res.status(500).send(`Error: ${error}`));
 });
@@ -47,6 +48,17 @@ app.get('/getTopOutput', (req, res) => {
 
 app.post('/upload', upload.array('files'), (req, res) => {
     res.json({ message: 'Files uploaded successfully', files: req.files });
+});
+
+app.get('/movies', (req, res) => {
+    const moviesDir = path.join(__dirname, '../../../video/tests/movies');
+    fs.readdir(moviesDir, (err, files) => {
+        if (err) {
+            return res.status(500).json({ error: 'Unable to fetch movie files' });
+        }
+        const mp4Files = files.filter(file => path.extname(file).toLowerCase() === '.mp4');
+        res.json(mp4Files);
+    });
 });
 
 app.listen(port, () => {

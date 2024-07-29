@@ -22,8 +22,8 @@ app.post('/executeCommand', (req, res) => {
 });
 
 app.post('/handleStream', (req, res) => {
-    const { id, action, preprocessing, postprocessing } = req.body;
-    const command = `${currentDir}/../../../video/start_stream.sh ${id} ${action} ${preprocessing} ${postprocessing}`;
+    const { action, type, id, preprocessing, postprocessing } = req.body;
+    const command = `${currentDir}/../../../video/video-stream ${action} ${type} ${id} ${preprocessing} ${postprocessing}`;
 
     exec(command, (error, stdout, stderr) => {
         if (error) {
