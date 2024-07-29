@@ -60,7 +60,7 @@ install_nodejs_packages() {
     if [ ! -f package.json ]; then
         npm init -y
     fi
-    npm install express body-parser axios
+    npm install express body-parser axios multer
 }
 
 if [ ! -x "$(command -v node)" ] || [ ! -f "$SCRIPT_DIR/back-end/package.json" ]; then
