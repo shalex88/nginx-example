@@ -3,26 +3,26 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 start() {
-    sudo systemctl start nginx
+    sudo nginx
     node $SCRIPT_DIR/back-end/http-controller.js &
     node $SCRIPT_DIR/back-end/back-end.js &
     disown
 }
 
+stop_nodejs() {
+    process_name=$1
+    node_pid=$(pgrep -f "node $process_name")
+    if [ -n "$node_pid" ]; then
+        echo "Stopping existing node $process_name process (PID: $node_pid)"
+        kill -9 $node_pid
+    fi
+}
+
 stop() {
-    sudo systemctl stop nginx
+    sudo killall nginx
 
-    NODE_PID=$(pgrep -f "node back-end")
-    if [ -n "$NODE_PID" ]; then
-        echo "Stopping existing node back-end.js process (PID: $NODE_PID)"
-        kill -9 $NODE_PID
-    fi
-
-    NODE_PID=$(pgrep -f "node http-controller.js")
-    if [ -n "$NODE_PID" ]; then
-        echo "Stopping existing node http-controller.js process (PID: $NODE_PID)"
-        kill -9 $NODE_PID
-    fi
+    stop_nodejs back-end.js
+    stop_nodejs http-controller.js
 }
 
 case "$1" in
