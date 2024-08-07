@@ -40,7 +40,7 @@ app.post('/handleStream', (req, res) => {
 });
 
 app.get('/getTopOutput', (req, res) => {
-    exec('sudo tegrastats | head -n 1', (error, stdout, stderr) => {
+    exec('tegrastats | head -n 1', (error, stdout, stderr) => {
         if (error) {
             return res.status(500).send(`Error: ${error.message}`);
         }

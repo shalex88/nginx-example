@@ -3,9 +3,9 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 start() {
-    sudo nginx
-    node $SCRIPT_DIR/back-end/http-controller.js &
-    node $SCRIPT_DIR/back-end/back-end.js &
+    nginx
+    $SCRIPT_DIR/back-end/http-controller.js &
+    $SCRIPT_DIR/back-end/back-end.js &
     disown
 }
 
@@ -19,7 +19,7 @@ stop_nodejs() {
 }
 
 stop() {
-    sudo killall nginx
+    killall nginx
 
     stop_nodejs back-end.js
     stop_nodejs http-controller.js

@@ -7,37 +7,37 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 configure() {
     # Backup original nginx.conf
     if [ ! -f /etc/nginx/nginx.conf.backup ]; then
-        sudo cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup
+        cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup
     fi
 
     # Backup original default site config
     if [ ! -f /etc/nginx/sites-available/default.backup ]; then
-        sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.backup
+        cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.backup
     fi
 
     cp "$SCRIPT_DIR/nginx/nginx.conf.template" "$SCRIPT_DIR/nginx/nginx.conf"
     sed -i "s|@path@|$SCRIPT_DIR|g" "$SCRIPT_DIR/nginx/nginx.conf"
 
     # Create symlink to the new config
-    sudo ln -sf "$SCRIPT_DIR/nginx/nginx.conf" /etc/nginx/sites-available/default
+    ln -sf "$SCRIPT_DIR/nginx/nginx.conf" /etc/nginx/sites-available/default
 
     # Add the current user to the www-data group
-    sudo usermod -aG www-data $USER
+    usermod -aG www-data $USER
 
     # Ensure the current user can edit files and directories
-    sudo chown -R $USER:www-data "$SCRIPT_DIR/www/html"
-    sudo chmod -R 775 "$SCRIPT_DIR/www/html"
+    chown -R $USER:www-data "$SCRIPT_DIR/www/html"
+    chmod -R 775 "$SCRIPT_DIR/www/html"
 
     # Set execute permissions on necessary directories
-    sudo chmod o+x $HOME
-    sudo chmod o+x $SCRIPT_DIR
+    chmod o+x $HOME
+    chmod o+x $SCRIPT_DIR
 }
 
 install() {
-    sudo apt update
-    sudo apt install -y nginx
-    sudo systemctl stop nginx
-    sudo systemctl disable nginx
+    apt update
+    apt install -y nginx
+    systemctl stop nginx
+    systemctl disable nginx
 }
 
 # Check if Nginx is already installed
@@ -52,7 +52,7 @@ configure
 cd "$SCRIPT_DIR/back-end"
 
 install_nodejs() {
-    sudo apt-get install -y nodejs npm
+    apt-get install -y nodejs npm
 }
 
 install_nodejs_packages() {
