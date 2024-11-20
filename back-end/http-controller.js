@@ -40,6 +40,14 @@ app.post('/handleStream', (req, res) => {
         .catch(error => res.status(500).send(`Error: ${error}`));
 });
 
+app.post('/handleStreamElement', (req, res) => {
+    const { command, type, id } = req.body;
+
+    axios.post(`${backendUrl}/handleStreamElement`, { command, type, id })
+        .then(response => res.send(response.data))
+        .catch(error => res.status(500).send(`Error: ${error}`));
+});
+
 app.get('/getTopOutput', (req, res) => {
     axios.get(`${backendUrl}/getTopOutput`)
         .then(response => res.send(response.data))

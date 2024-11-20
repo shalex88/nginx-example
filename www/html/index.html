@@ -76,8 +76,8 @@
             <select id="movieFilesDropdown">
             </select>
             <div>
-                <input type="checkbox" id="preprocessing0"> Preprocessing
-                <input type="checkbox" id="postprocessing0"> Postprocessing
+                <input type="checkbox" id="preprocessing0" onchange="handleElementEnableDisable(this, 'file', 0)"> Preprocessing
+                <input type="checkbox" id="postprocessing0" onchange="handleElementEnableDisable(this, 'file', 0)"> Postprocessing
                 <button id="toggle0" onclick="toggleStream(this, 'file', document.getElementById('movieFilesDropdown').value, document.getElementById('preprocessing0').checked, document.getElementById('postprocessing0').checked)">On</button>
             </div>
             <div class="video-stream" id="stream0">
@@ -105,8 +105,8 @@
             return `
                 <section class="camera-block">
                     <h2>${type} ${id}</h2>
-                    <input type="checkbox" id="preprocessing${id}"> Preprocessing
-                    <input type="checkbox" id="postprocessing${id}"> Postprocessing
+                    <input type="checkbox" id="preprocessing${id}" onchange="handleElementEnableDisable(this, '${type}', '${id}')"> preprocessing
+                    <input type="checkbox" id="postprocessing${id}" onchange="handleElementEnableDisable(this, '${type}', '${id}')"> postprocessing
                     <button id="toggle${id}" onclick="toggleStream(this, '${type}', ${id}, document.getElementById('preprocessing${id}').checked, document.getElementById('postprocessing${id}').checked)">On</button>
                     <div class="video-stream" id="stream${id}">
                         <iframe id="iframe${id}" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
@@ -136,6 +136,8 @@
                 streamElement = document.getElementById(`stream0`).querySelector('iframe');
             } else if (type == 'camera') {
                 streamElement = document.getElementById(`stream${id}`).querySelector('iframe');
+                preprocessing = false;
+                postprocessing = false;
             }
 
             if (button.textContent === "On") {
@@ -149,6 +151,27 @@
                 button.textContent = "On";
                 streamElement.src = '';
             }
+        }
+
+        function handleElementEnableDisable(checkbox, type, id) {
+            const elementName = checkbox.id.replace(/[0-9]/g, '');
+            console.log(`FE: ${type}${id} ${elementName}  ${checkbox.checked ? 'enabled' : 'disabled'}`);
+            const command = (checkbox.checked ? 'enable_' : 'disable_') + elementName;
+            handleStreamElement(command, type, id);
+        }
+
+        function handleStreamElement(command, type, id) {
+            console.log(`FE: ${command}`);
+            fetch('/handleStreamElement', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ command, type, id })
+            })
+            .then(response => response.text())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
         }
 
         function handleStream(action, type, id, preprocessing, postprocessing) {

@@ -1,10 +1,26 @@
 const express = require('express');
 const { exec } = require('child_process');
-const os = require('os');
 const path = require('path');
+const net = require('net');
 
 const app = express();
 const port = 4000;
+
+function connectToTcpServer(message, id, logCallback) {
+    const client = new net.Socket();
+    client.connect(`1234${id}`, '127.0.1.1', () => {
+        client.write(message);
+    });
+
+    client.on('data', (data) => {
+        logCallback(data);
+        client.destroy(); // kill client after server's response
+    });
+
+    client.on('error', (err) => {
+        logCallback(`TCP Client Error: ${err.message}`);
+    });
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -34,8 +50,19 @@ app.post('/handleStream', (req, res) => {
             console.error(`Stderr: ${stderr}`);
             return res.status(500).send(`Stderr: ${stderr}`);
         }
-        console.log(stdout);
-        res.send(stdout);
+        console.log(`BE: ${stdout}`);
+        res.send(`BE: ${stdout}`);
+    });
+});
+
+app.post('/handleStreamElement', (req, res) => {
+    const { command, type, id } = req.body;
+
+    console.log(`BE: ${type}${id} ${command}`);
+
+    connectToTcpServer(command, id, (message) => {
+        console.log(`BE: received ${message}`);
+        res.send(`BE: ${message}`);
     });
 });
 
