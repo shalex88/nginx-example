@@ -43,6 +43,7 @@ install_nginx() {
         --with-http_mp4_module
     make
     sudo make install
+    sudo ln -sf /usr/local/nginx/sbin/nginx /usr/local/sbin/nginx
     nginx -V
 
     sudo systemctl stop nginx
