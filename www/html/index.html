@@ -76,9 +76,10 @@
             <select id="movieFilesDropdown">
             </select>
             <div>
-                <input type="checkbox" id="preprocessing0" onchange="handleElementEnableDisable(this, 'file', 0)"> Preprocessing
-                <input type="checkbox" id="postprocessing0" onchange="handleElementEnableDisable(this, 'file', 0)"> Postprocessing
-                <button id="toggle0" onclick="toggleStream(this, 'file', document.getElementById('movieFilesDropdown').value, document.getElementById('preprocessing0').checked, document.getElementById('postprocessing0').checked)">On</button>
+                <input type="checkbox" id="preprocessing0" onchange="handleElementEnableDisable(this, 'file', '0')"> Preprocessing
+                <input type="checkbox" id="atr_tee0" onchange="handleElementEnableDisable(this, 'file', '0')"> ATR
+                <input type="checkbox" id="nvdsosd0" onchange="handleElementEnableDisable(this, 'file', '0')"> Overlay
+                <button id="toggle0" onclick="toggleStream(this, 'file', document.getElementById('movieFilesDropdown').value, document.getElementById('preprocessing0').checked, document.getElementById('atr_tee0').checked, document.getElementById('nvdsosd0').checked)">On</button>
             </div>
             <div class="video-stream" id="stream0">
                 <iframe id="iframe0" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
@@ -105,9 +106,10 @@
             return `
                 <section class="camera-block">
                     <h2>${type} ${id}</h2>
-                    <input type="checkbox" id="preprocessing${id}" onchange="handleElementEnableDisable(this, '${type}', '${id}')"> preprocessing
-                    <input type="checkbox" id="postprocessing${id}" onchange="handleElementEnableDisable(this, '${type}', '${id}')"> postprocessing
-                    <button id="toggle${id}" onclick="toggleStream(this, '${type}', ${id}, document.getElementById('preprocessing${id}').checked, document.getElementById('postprocessing${id}').checked)">On</button>
+                    <input type="checkbox" id="preprocessing${id}" onchange="handleElementEnableDisable(this, '${type}', '${id}')"> Preprocessing
+                    <input type="checkbox" id="atr_tee${id}" onchange="handleElementEnableDisable(this, '${type}', '${id}')"> ATR
+                    <input type="checkbox" id="nvdsosd${id}" onchange="handleElementEnableDisable(this, '${type}', '${id}')"> Overlay
+                    <button id="toggle${id}" onclick="toggleStream(this, '${type}', ${id}, document.getElementById('preprocessing${id}').checked, document.getElementById('atr_tee${id}').checked, document.getElementById('nvdsosd${id}').checked)">On</button>
                     <div class="video-stream" id="stream${id}">
                         <iframe id="iframe${id}" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
                     </div>
@@ -131,22 +133,22 @@
             iframe.src = `http://${serverIp}:${video_port}/stream${id}/`;
         }
 
-        function toggleStream(button, type, id, preprocessing, postprocessing) {
+        function toggleStream(button, type, id, preprocessing, atr, overlay) {
             if (type == 'file') {
                 streamElement = document.getElementById(`stream0`).querySelector('iframe');
             } else if (type == 'camera') {
                 streamElement = document.getElementById(`stream${id}`).querySelector('iframe');
                 preprocessing = false;
-                postprocessing = false;
+                overlay = false;
             }
 
             if (button.textContent === "On") {
-                handleStream('start', type, id, preprocessing, postprocessing);
+                handleStream('start', type, id, preprocessing, atr, overlay);
                 streamElement.style.display = 'block';
                 button.textContent = "Off";
                 setIframeSrc(type, id);
             } else {
-                handleStream('stop', type, id, preprocessing, postprocessing);
+                handleStream('stop', type, id, preprocessing, atr, overlay);
                 streamElement.style.display = 'none';
                 button.textContent = "On";
                 streamElement.src = '';
@@ -174,14 +176,14 @@
             .catch(error => console.error('Error:', error));
         }
 
-        function handleStream(action, type, id, preprocessing, postprocessing) {
-            console.log(`FE: ${action} ${type} ${id} ${preprocessing} ${postprocessing}`);
+        function handleStream(action, type, id, preprocessing, atr, overlay) {
+            console.log(`FE: ${action} ${type} ${id} ${preprocessing} ${atr} ${overlay}`);
             fetch('/handleStream', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ action, type, id, preprocessing, postprocessing })
+                body: JSON.stringify({ action, type, id, preprocessing, atr, overlay })
             })
             .then(response => response.text())
             .then(data => console.log(data))
