@@ -38,8 +38,8 @@ app.post('/executeCommand', (req, res) => {
 });
 
 app.post('/handleStream', (req, res) => {
-    const { action, type, id, preprocessing, postprocessing } = req.body;
-    const command = `${currentDir}/../../../video/video-stream ${action} ${type} ${id} ${preprocessing} ${postprocessing}`;
+    const { action, type, id, preprocessing, atr, overlay } = req.body;
+    const command = `${currentDir}/../../../video/video-stream ${action} ${type} ${id} ${preprocessing} ${atr} ${overlay}`;
 
     exec(command, (error, stdout, stderr) => {
         if (error) {

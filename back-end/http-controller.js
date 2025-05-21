@@ -33,9 +33,9 @@ app.post('/sendData', (req, res) => {
 });
 
 app.post('/handleStream', (req, res) => {
-    const { action, type, id, preprocessing, postprocessing } = req.body;
+    const { action, type, id, preprocessing, atr, overlay } = req.body;
 
-    axios.post(`${backendUrl}/handleStream`, { action, type, id, preprocessing, postprocessing })
+    axios.post(`${backendUrl}/handleStream`, { action, type, id, preprocessing, atr, overlay })
         .then(response => res.send(response.data))
         .catch(error => res.status(500).send(`Error: ${error}`));
 });
