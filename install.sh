@@ -3,23 +3,14 @@
 ############## Server setup ##########################
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+NGINX_CONF_DIR="/usr/local/nginx/conf"
+NGINX_CONF="nginx.conf"
 
-configure() {
-    # Backup original nginx.conf
-    if [ ! -f /etc/nginx/nginx.conf.backup ]; then
-        sudo cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup
-    fi
+configure_nginx() {
+    cp "$SCRIPT_DIR/nginx/$NGINX_CONF.template" "$SCRIPT_DIR/nginx/$NGINX_CONF"
+    sed -i "s|@path@|$SCRIPT_DIR|g" "$SCRIPT_DIR/nginx/$NGINX_CONF"
 
-    # Backup original default site config
-    if [ ! -f /etc/nginx/sites-available/default.backup ]; then
-        sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.backup
-    fi
-
-    cp "$SCRIPT_DIR/nginx/nginx.conf.template" "$SCRIPT_DIR/nginx/nginx.conf"
-    sed -i "s|@path@|$SCRIPT_DIR|g" "$SCRIPT_DIR/nginx/nginx.conf"
-
-    # Create symlink to the new config
-    sudo ln -sf "$SCRIPT_DIR/nginx/nginx.conf" /etc/nginx/sites-available/default
+    sudo cp "$SCRIPT_DIR/nginx/$NGINX_CONF" "$NGINX_CONF_DIR/$NGINX_CONF"
 
     # Add the current user to the www-data group
     sudo usermod -aG www-data $USER
@@ -33,19 +24,38 @@ configure() {
     sudo chmod o+x $SCRIPT_DIR
 }
 
-install() {
-    sudo apt update
-    sudo apt install -y nginx
+install_nginx() {
+    cd "$SCRIPT_DIR"
+
+    sudo apt-get install gcc make libpcre3-dev zlib1g-dev libssl-dev
+
+    git clone https://github.com/nginx/nginx.git -b stable-1.26 nginx_src
+    cd nginx_src
+
+    auto/configure \
+        --conf-path=$NGINX_CONF_DIR/nginx.conf \
+        --with-pcre \
+        --with-http_ssl_module \
+        --with-http_image_filter_module \
+        --with-http_v2_module \
+        --with-stream \
+        --with-http_addition_module \
+        --with-http_mp4_module
+    make
+    sudo make install
+    sudo ln -sf /usr/local/nginx/sbin/nginx /usr/local/sbin/nginx
+    nginx -V
+
     sudo systemctl stop nginx
     sudo systemctl disable nginx
 }
 
 # Check if Nginx is already installed
 if ! [ -x "$(command -v nginx)" ]; then
-    install
+    install_nginx
 fi
 
-configure
+configure_nginx
 
 ############## Back-end setup ##########################
 # Navigate to the back-end directory
@@ -53,16 +63,18 @@ cd "$SCRIPT_DIR/back-end"
 
 install_nodejs() {
     sudo apt-get install -y nodejs npm
-
-    # Initialize a new Node.js project if not already done
-    if [ ! -f package.json ]; then
-    npm init -y
-    fi
-
-    # Install required npm packages
-    npm install express body-parser
 }
 
-if ! [ -x "$(command -v node)" ]; then
+install_nodejs_packages() {
+    # Initialize a new Node.js project if not already done
+    if [ ! -f package.json ]; then
+        npm init -y
+    fi
+    npm install express body-parser axios multer
+}
+
+if [ ! -x "$(command -v node)" ] || [ ! -f "$SCRIPT_DIR/back-end/package.json" ]; then
     install_nodejs
 fi
+
+install_nodejs_packages

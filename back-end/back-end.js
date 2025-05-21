@@ -1,21 +1,35 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const { exec } = require('child_process');
-const os = require('os');
+const path = require('path');
+const net = require('net');
 
 const app = express();
-const port = 3000;
+const port = 4000;
 
-const userHomeDir = os.homedir();
+function connectToTcpServer(message, id, logCallback) {
+    const client = new net.Socket();
+    client.connect(`1234${id}`, '127.0.1.1', () => {
+        client.write(message);
+    });
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+    client.on('data', (data) => {
+        logCallback(data);
+        client.destroy(); // kill client after server's response
+    });
 
-// Endpoint to handle input data
-app.post('/sendData', (req, res) => {
-    const inputData = req.body.data;
+    client.on('error', (err) => {
+        logCallback(`TCP Client Error: ${err.message}`);
+    });
+}
 
-    exec(inputData, (error, stdout, stderr) => {
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+const currentDir = path.dirname(__filename);
+app.post('/executeCommand', (req, res) => {
+    const { command } = req.body;
+
+    exec(command, (error, stdout, stderr) => {
         if (error) {
             return res.status(500).send(`Error: ${stderr}`);
         }
@@ -24,17 +38,16 @@ app.post('/sendData', (req, res) => {
 });
 
 app.post('/handleStream', (req, res) => {
-    const { id, action, preprocessing, postprocessing } = req.body;
-    // TODO: Remove hardcoded path
-    const command = `${userHomeDir}/project/video/start_stream.sh ${id} ${action} ${preprocessing} ${postprocessing}`;
+    const { action, type, id, preprocessing, atr, overlay } = req.body;
+    const command = `${currentDir}/../../../video/video-stream ${action} ${type} ${id} ${preprocessing} ${atr} ${overlay}`;
 
     exec(command, (error, stdout, stderr) => {
         if (error) {
-            console.error(`exec error: ${error}`);
+            console.error(`Error: ${error.message}`);
             return res.status(500).send(`Error: ${error.message}`);
         }
         if (stderr) {
-            console.error(`stderr: ${stderr}`);
+            console.error(`Stderr: ${stderr}`);
             return res.status(500).send(`Stderr: ${stderr}`);
         }
         console.log(`BE: ${stdout}`);
@@ -42,38 +55,44 @@ app.post('/handleStream', (req, res) => {
     });
 });
 
+app.post('/handleStreamElement', (req, res) => {
+    const { command, type, id } = req.body;
+
+    console.log(`BE: ${type}${id} ${command}`);
+
+    connectToTcpServer(command, id, (message) => {
+        console.log(`BE: received ${message}`);
+        res.send(`BE: ${message}`);
+    });
+});
+
 app.get('/getTopOutput', (req, res) => {
     exec('sudo tegrastats | head -n 1', (error, stdout, stderr) => {
         if (error) {
-            console.error(`exec error: ${error}`);
             return res.status(500).send(`Error: ${error.message}`);
         }
         if (stderr) {
-            console.error(`stderr: ${stderr}`);
             return res.status(500).send(`Stderr: ${stderr}`);
         }
 
         const output = stdout.trim();
-
         // Parse the output
         const timestamp = output.match(/\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}/)[0];
         const memoryUsage = output.match(/RAM .*?MB/)[0];
         const swapUsage = output.match(/SWAP .*?MB/)[0];
         const cpuUsage = output.match(/CPU \[.*?\]/)[0].replace(/CPU \[|\]/g, '').split(',').map((cpu, index) => `${index + 1} - ${cpu.trim().replace("%@", "% ")}MHz`).join('\n');
 
-        emcFreqMatch = "N/A";
+        let emcFreqMatch = "N/A";
         try {
             emcFreqMatch = output.match(/EMC_FREQ \d+%@\d+/)[0].replace("%@", "% ")+"MHz";
-        } catch (e) {
-        }
+        } catch (e) {}
 
-        gr3dFreq = "N/A";
+        let gr3dFreq = "N/A";
         try {
             gr3dFreq = output.match(/GR3D_FREQ \d+%@\[\d+/)[0].replace("%@[", "% ")+"MHz";
-        } catch (e) {
-        }
+        } catch (e) {}
 
-        videoEncoding = "N/A";
+        let videoEncoding = "N/A";
         try {
             videoEncoding = output.match(/NVENC .*? NVDEC off NVJPG off NVJPG1 off VIC .*? OFA off NVDLA0 off NVDLA1 off PVA0_FREQ off APE \d+/)[0]
                 .replace("%@", "% ")
@@ -87,10 +106,9 @@ app.get('/getTopOutput', (req, res) => {
                 .replace(/ NVDLA1/g, '\nNVDLA1')
                 .replace(/ PVA0_FREQ/g, '\nPVA0_FREQ')
                 .replace(/ APE/g, '\nAPE') + "MHz";
-        } catch (e) {
-        }
+        } catch (e) {}
 
-        temperatures = "N/A";
+        let temperatures = "N/A";
         try {
             temperatures = output.match(/cpu@.*?C tboard@.*?C soc2@.*?C tdiode@.*?C soc0@.*?C tj@.*?C soc1@.*?C/)[0]
                 .replace("@", " ")
@@ -101,8 +119,7 @@ app.get('/getTopOutput', (req, res) => {
                 .replace("@", " ")
                 .replace("@", " ")
                 .replace("@", " ");
-        } catch (e) {
-        }
+        } catch (e) {}
 
         const powerConsumption = output.match(/VDD_GPU_SOC .*? VDD_CPU_CV .*? VIN_SYS_5V0 .*? VDDQ_VDD2_1V8AO .*?mW.*?mW/)[0]
             .replace(/ VDD_CPU_CV/g, '\nVDD_CPU_CV')
@@ -126,12 +143,12 @@ ${videoEncoding}
 ${temperatures}
 ---Power Monitor--------
 ${powerConsumption}
-        `;
+            `;
 
         res.send(structuredOutput.trim());
     });
 });
 
 app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}/`);
+    console.log(`Backend server running at http://localhost:${port}/`);
 });

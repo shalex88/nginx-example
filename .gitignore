@@ -2,3 +2,4 @@
 /back-end/package*
 /nginx/nginx.conf
 /www/html/streams/
+/nginx_src/
