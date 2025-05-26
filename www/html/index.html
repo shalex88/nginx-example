@@ -77,9 +77,9 @@
             </select>
             <div>
                 <input type="checkbox" id="preprocessing0" onchange="handleElementEnableDisable(this, 'file', '0')"> Preprocessing
-                <input type="checkbox" id="atr_tee0" onchange="handleElementEnableDisable(this, 'file', '0')"> ATR
+                <input type="checkbox" id="nvinfer0" onchange="handleElementEnableDisable(this, 'file', '0')"> ATR
                 <input type="checkbox" id="nvdsosd0" onchange="handleElementEnableDisable(this, 'file', '0')"> Overlay
-                <button id="toggle0" onclick="toggleStream(this, 'file', document.getElementById('movieFilesDropdown').value, document.getElementById('preprocessing0').checked, document.getElementById('atr_tee0').checked, document.getElementById('nvdsosd0').checked)">On</button>
+                <button id="toggle0" onclick="toggleStream(this, 'file', document.getElementById('movieFilesDropdown').value, document.getElementById('preprocessing0').checked, document.getElementById('nvinfer0').checked, document.getElementById('nvdsosd0').checked)">On</button>
             </div>
             <div class="video-stream" id="stream0">
                 <iframe id="iframe0" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
@@ -107,9 +107,9 @@
                 <section class="camera-block">
                     <h2>${type} ${id}</h2>
                     <input type="checkbox" id="preprocessing${id}" onchange="handleElementEnableDisable(this, '${type}', '${id}')"> Preprocessing
-                    <input type="checkbox" id="atr_tee${id}" onchange="handleElementEnableDisable(this, '${type}', '${id}')"> ATR
+                    <input type="checkbox" id="nvinfer${id}" onchange="handleElementEnableDisable(this, '${type}', '${id}')"> ATR
                     <input type="checkbox" id="nvdsosd${id}" onchange="handleElementEnableDisable(this, '${type}', '${id}')"> Overlay
-                    <button id="toggle${id}" onclick="toggleStream(this, '${type}', ${id}, document.getElementById('preprocessing${id}').checked, document.getElementById('atr_tee${id}').checked, document.getElementById('nvdsosd${id}').checked)">On</button>
+                    <button id="toggle${id}" onclick="toggleStream(this, '${type}', ${id}, document.getElementById('preprocessing${id}').checked, document.getElementById('nvinfer${id}').checked, document.getElementById('nvdsosd${id}').checked)">On</button>
                     <div class="video-stream" id="stream${id}">
                         <iframe id="iframe${id}" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
                     </div>
